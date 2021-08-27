@@ -1,0 +1,61 @@
+version: '3.4'
+
+networks:
+  web_net:
+    external: true
+
+volumes:
+  traefik-acme:
+    name: traefik-acme          
+
+services:
+  traefik:
+    image: traefik:v2.4.8
+    restart: always
+    container_name: traefik
+    command:
+      - "--log.level=INFO"
+      - "--log.filepath=/log-file.log"
+      - "--log.format=json"
+      - "--api=true"
+      - "--ping=true"
+      - "--accesslog=true"
+      - "--accesslog.bufferingsize=100"
+      - "--api.insecure=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=web_net"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--metrics.prometheus=true"
+      - "--entryPoints.metrics.address=:8082"
+      - "--metrics.prometheus.entryPoint=metrics"
+      - "--certificatesresolvers.mycert.acme.email=rafiee1001@gmail.com"
+      - "--certificatesresolvers.mycert.acme.storage=/acme/acme.json"
+      - "--certificatesresolvers.mycert.acme.tlschallenge=true"
+      - "--providers.file.filename=/traefik/config.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+      - ./traefik:/traefik
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`web.DockerMe.ir`)"
+      - "traefik.http.routers.traefik.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.web-auth.basicauth.users=ahmad:{SHA}Ju4jbsrOF+ZHxAUONo+N/64DyOM="
+      - "traefik.http.routers.traefik-secure.middlewares=web-auth"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`web.DockerMe.ir`)"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.options=default"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=mycert"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"

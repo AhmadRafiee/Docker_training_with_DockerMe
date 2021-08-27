@@ -1,0 +1,80 @@
+version: '3.4'
+
+networks:
+  web_net:
+    external: true
+  app_net:
+    external: true
+
+volumes:
+  gitlab_backup:
+    name: gitlab_backup
+  gitlab_data:
+    name: gitlab_data
+  gitlab_logs:
+    name: gitlab_logs
+  gitlab_config:
+    name: gitlab_config
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:13.10.3-ce.0
+    restart: always
+    container_name: gitlab
+    hostname: git.DockerMe.ir
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Set external url
+        external_url 'https://git.DockerMe.ir'
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['http2_enabled'] = false
+
+        nginx['proxy_set_headers'] = {
+          "Host" => "$$http_host",
+          "X-Real-IP" => "$$remote_addr",
+          "X-Forwarded-For" => "$$proxy_add_x_forwarded_for",
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
+
+        # Nginx Configuration
+        nginx['client_max_body_size'] = '10240m'
+        nginx['gzip_enabled'] = true
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['proxy_cache'] = 'gitlab'
+        nginx['http2_enabled'] = true
+
+        # gitlab backup config
+        gitlab_rails['manage_backup_path'] = true
+        gitlab_rails['backup_path'] = "/var/opt/gitlab/backups"
+        gitlab_rails['backup_archive_permissions'] = 0644
+        gitlab_rails['backup_keep_time'] = 604800
+        gitlab_rails['env'] = {"SKIP" => "registry"}
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.gitlab.entrypoints=http"
+      - "traefik.http.routers.gitlab.rule=Host(`git.DockerMe.ir`)"
+      - "traefik.http.routers.gitlab.middlewares=https-redirect"
+      - "traefik.http.routers.gitlab-secure.entrypoints=https"
+      - "traefik.http.routers.gitlab-secure.rule=Host(`git.DockerMe.ir`)"
+      - "traefik.http.routers.gitlab-secure.tls=true"
+      - "traefik.http.routers.gitlab-secure.tls.options=default"
+      - "traefik.http.routers.gitlab-secure.middlewares=security@file,hsts@file"
+      - "traefik.http.routers.gitlab.service=gitlab"
+      - "traefik.http.routers.gitlab-secure.service=gitlab"
+      - "traefik.http.routers.gitlab-secure.tls.certresolver=mycert"
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+    volumes:
+      - gitlab_backup:/var/opt/gitlab/backups
+      - gitlab_data:/var/opt/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_config:/etc/gitlab
+    ports:
+      - "2222:22"
+    networks:
+      app_net:
+      web_net:

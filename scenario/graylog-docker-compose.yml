@@ -1,0 +1,72 @@
+version: '3.8'
+
+volumes:
+  mongo_data:
+    name: mongo_data
+  elasticsearch_data:
+    name: elasticsearch_data
+
+networks:
+  graylog:
+    driver: bridge
+
+services:
+  mongo:
+    image: mongo:4.2
+    restart: always
+    container_name: mongo
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - graylog
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    restart: always
+    container_name: elasticsearch
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    networks:
+      - graylog
+
+  graylog:
+    image: graylog/graylog:4.0
+    container_name: graylog
+    environment:
+      # CHANGE ME (must be at least 16 characters)!
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      # Password: admin
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
+    networks:
+      - graylog
+    restart: always
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 1514:1514
+      # Syslog UDP
+      - 1514:1514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
