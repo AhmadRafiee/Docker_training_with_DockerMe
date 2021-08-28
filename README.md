@@ -47,7 +47,7 @@
     - free course
     - interactive shell
 
-#  Refrence
+#  Reference
  - https://training.play-with-docker.com/
  - https://github.com/docker/labs
  - https://container.training/
