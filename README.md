@@ -19,7 +19,7 @@
     - [wordpress with docker](scenario/wordpress-with-nginx)
     - [nginx with docker](scenario/web-service-nginx)
     - [private registry](scenario/registry)
-    - [redis cluster with docker](scenario/redis_cluster)
+    - [redis cluster with docker](scenario/redis_cluster_sample)
     - [elk with docker](scenario/elk)
     - [gitlab with docker](scenario/gitlab_traefik/gitlab)
     - [traefik with docker](scenario/gitlab_traefik/traefik)
