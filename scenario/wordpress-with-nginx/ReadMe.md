@@ -58,7 +58,7 @@ wordpress:latest
 # check wordpress services
 docker ps
 docker stats --no-stream
-docker logs wordpress 
+docker logs wordpress
 ```
 
 ### create nginx directory
@@ -72,8 +72,8 @@ tree ./nginx
 ```bash
 vim ./nginx/conf.d/wordpress.conf
 server {
-  listen 443;
-  server_name wp.dockerme.ir ssl;
+  listen 443 ssl;
+  server_name wp.dockerme.ir;
 
   # SSL
   ssl_certificate /etc/nginx/certs/cert.pem;
