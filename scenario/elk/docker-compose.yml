@@ -1,6 +1,6 @@
 version: '3.8'
 
-volumes: 
+volumes:
   es_data:
     name: es_data
 
@@ -21,8 +21,8 @@ services:
       - es_data:/usr/share/elasticsearch/data
     container_name: elasticsearch
     restart: on-failure
-#    ports:
-#      - "9200:9200"
+    ports:
+      - "9200:9200"
     environment:
       ES_JAVA_OPTS: "-Xmx1g -Xms1g"
       ELASTIC_PASSWORD: changeme
@@ -35,7 +35,6 @@ services:
         soft: -1
         hard: -1
     networks:
-      - http_network
       - elk_network
 
   logstash:

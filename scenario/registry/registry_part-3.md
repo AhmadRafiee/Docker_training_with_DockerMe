@@ -1,4 +1,4 @@
-# Part 3 - Using Basic Authentication with a Secured Registry in Linux
+w# Part 3 - Using Basic Authentication with a Secured Registry in Linux
 
 From [Part 2](part-2.md) we have a registry running in a Docker container, which we can securely access over HTTPS from any machine in our network. We used a self-signed certificate, which has security implications, but you could buy an SSL from a CA instead, and use that for your registry. With secure communication in place, we can set up user authentication.
 

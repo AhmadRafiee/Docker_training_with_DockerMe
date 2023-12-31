@@ -1,22 +1,23 @@
 # Running wordpress with docker
-## 
+##
+![wordpress with DockerMe](wordpress.png)
 
 ## Step1: running wordpress with docker commands
-### pull all needed images 
+### pull all needed images
 ```bash
 docker pull wordpress:latest
 docker pull nginx:latest
 docker pull mysql:5.7
 ```
 
-### create network and check it 
+### create network and check it
 ```bash
 docker network create --driver bridge wp-net
 docker network ls
 docker inspect wp-net
 ```
 
-### create volume and check it 
+### create volume and check it
 ```bash
 docker volume create --name wp-data
 docker volume create --name db-data
@@ -27,7 +28,7 @@ docker inspect db-data
 
 ### run mysql service and check it
 ```bash
-docker run -itd --name mysql --hostname mysql \
+docker run -d --name mysql --hostname mysql \
 --network=wp-net --restart=always \
 --mount=source=db-data,target=/var/lib/mysql \
 -e MYSQL_ROOT_PASSWORD=sdvfsacsiojoijsaefawefmwervs \
@@ -45,7 +46,7 @@ docker exec -i mysql mysql -u root -psdvfsacsiojoijsaefawefmwervs  <<< "show dat
 
 ### run wordpress service and check it
 ```bash
-docker run -itd --name wordpress --hostname wordpress \
+docker run -d --name wordpress --hostname wordpress \
 --network=wp-net --restart=always \
 --mount=source=wp-data,target=/var/www/html/ \
 -e WORDPRESS_DB_PASSWORD=sdvfsacsiojoijsaefawefmwervs \
@@ -72,10 +73,9 @@ tree ./nginx
 vim ./nginx/conf.d/wordpress.conf
 server {
   listen 443;
-  server_name wp.dockerme.ir;
+  server_name wp.dockerme.ir ssl;
 
   # SSL
-  ssl on;
   ssl_certificate /etc/nginx/certs/cert.pem;
   ssl_certificate_key /etc/nginx/certs/key.pem;
 
@@ -106,7 +106,7 @@ openssl req -x509 -nodes -newkey \
 rsa:4096 -days 365 \
 -keyout $CERT_LOCATION/key.pem \
 -subj "/C=IR/ST=Iran/L=Tehran/O=DockerMe/OU=IT/CN=DockerMe.ir/emailAddress=rafiee1001@gmail.com" \
--out $CERT_LOCATION/cert.pem 
+-out $CERT_LOCATION/cert.pem
 
 # cehck certificate
 openssl x509 -text -noout -in $CERT_LOCATION/cert.pem
@@ -142,8 +142,8 @@ du -sh full-backup-*.sql
 
 ## Step2: running wordpress with compose-file and docker-compose
 
-### compose file 
-```bash 
+### compose file
+```bash
 ---
 version: '3.8'
 
@@ -210,7 +210,7 @@ services:
 ### check and run compose file
 ```bash
 docker-compose config
-docker-compose up -d 
-docker-compose logs -f 
+docker-compose up -d
+docker-compose logs -f
 docker-compose ps
 ```
